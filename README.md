@@ -1,1 +1,3 @@
 # PDDBOT
+
+necotorie izmeneniya
