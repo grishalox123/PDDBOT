@@ -1,36 +1,56 @@
-import telebot
-from telebot import types
+import aiogram
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
-bot = telebot.TeleBot('5661460090:AAHOPwFI4pT_eA-Ge8vcMEk3X_LbC7GLZFo')
+token_api = "5661460090:AAHOPwFI4pT_eA-Ge8vcMEk3X_LbC7GLZFo"
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    mess = f'Ассалам алейкум, <b>{message.from_user.first_name}</b>! Выбери количество билетов для капитального прорешивания.'
-    tickets10 = types.KeyboardButton('10 билетов')
-    tickets25 = types.KeyboardButton('25 билетов')
-    tickets50 = types.KeyboardButton('50 билетов')
-    markup.add(tickets10, tickets25, tickets50)
-    bot.send_message(message.chat.id, mess, reply_markup=markup, parse_mode='html')
+bot = Bot(token_api)
+dp = Dispatcher(bot)
 
-@bot.message_handler(content_types=['text'])
-def text(message):
-    get_message_bot = message.text.strip().lower()
+kb = ReplyKeyboardMarkup(resize_keyboard=True)
+kb.add(KeyboardButton('10 билетов'))
+kb.add(KeyboardButton('20 билетов'))
+kb.add(KeyboardButton('30 билетов'))
+kb.add(KeyboardButton('40 билетов'))
 
-    if get_message_bot == "10 билетов":
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        a = types.KeyboardButton('Да')
-        b = types.KeyboardButton('Нет')
-        c = types.KeyboardButton('Может быть')
-        d = types.KeyboardButton('Не знаю')
-        markup.add(a, b, d, c)
-        final_mess = "Что из этого правильно?"
-    else:
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        final_mess = "Похоже ты выбрал что-то не то."
+keyb = ReplyKeyboardMarkup(resize_keyboard=True)
+keyb.add(KeyboardButton("Правильно"))
+keyb.insert(KeyboardButton("Не правильно"))
+keyb.add(KeyboardButton("Круто"))
+keyb.insert(KeyboardButton("Классно"))
+keyb.add(KeyboardButton("Выйти"))
 
-    bot.send_message(message.chat.id, final_mess, reply_markup=markup)
+@dp.message_handler(commands=['start'])
+async def start_command(message: types.message):
+    await message.answer("<b>Салам алейкум!</b> Выбери сколько вопросов ты хочешь прорешать.",
+                         parse_mode="HTML",
+                         reply_markup=kb)
+
+@dp.message_handler(text=["10 билетов"])
+async def t10(message: types.message):
+    await message.answer('Выбери правильный ответ.',
+                           reply_markup=keyb)
+
+@dp.message_handler(text=["20 билетов"])
+async def t20(message: types.message):
+    await message.answer('Выбери правильный ответ.',
+                           reply_markup=keyb)
+
+@dp.message_handler(text=["30 билетов"])
+async def t30(message: types.message):
+    await message.answer('Выбери правильный ответ.',
+                           reply_markup=keyb)
+
+@dp.message_handler(text=["40 билетов"])
+async def t40(message: types.message):
+    await message.answer('Выбери правильный ответ.',
+                           reply_markup=keyb)
+
+@dp.message_handler(text=['Выйти'])
+async def open_st(message: types.message):
+    await message.answer('Вы успешно вышли.',
+                         reply_markup=kb)
 
 
-bot.polling(none_stop=True)
-
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
