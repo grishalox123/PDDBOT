@@ -1,7 +1,0 @@
-# PDDBOT
-
-nekotorie izmeneniya!
-дороу
-
-
-
