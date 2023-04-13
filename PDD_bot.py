@@ -18,13 +18,15 @@ bot = Bot(token=os.getenv('TOKEN'))
 # For example use simple MemoryStorage for Dispatcher.
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
+errors_count={ }
+tickets_count={ }
 
 # States
 class User(StatesGroup):
     menu = State()
-    bilet10 = State()
-    bilet20 = State()
-    bilet30 = State()
+    bilets = State()
+    bilets1 = State()
+    bilets2 = State()
 
 @dp.message_handler(state='*', commands='start')
 @dp.message_handler(commands="start")
@@ -32,32 +34,131 @@ async def cmd_start(message: types.Message):
     global connection
     print(message.chat.id)
     await User.menu.set()
+    photo_q = open('q.jpg', 'rb')
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["10 билетов", "20 билетов", "30 билетов"]
+    buttons = ["Начать решать"]
     keyboard.add(*buttons)
-    await message.answer("Сколько билетов ты хочешь прорешать?", reply_markup=keyboard)
+    await message.answer_photo(photo_q,caption=
+                               f"Здравствуй, уважаемый(ая) <b>{message.from_user.username}</b>!\n"
+                               "\n"
+                               "Этот бот создан, чтобы помочь Вам подготовиться к экзамену по билетам ПДД.\n"
+                               "Все билеты взяты с официальных источников.\n"
+                               "Вам осталось только нажать кнопку :) \n \n<b>Желаем удачи!</b>"
+                               , parse_mode='HTML', reply_markup=keyboard)
 
-@dp.message_handler(state='*')
+@dp.message_handler(state=User.menu)
 async def menu(message: types.Message):
     global connection
-    if message.text == '10 билетов':
-        await User.bilet10.set()
+    if message.text == 'Начать решать' or 'Давай попробуем!':
+        await User.bilets.set()
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
         buttons = ['1️⃣',
                    "2️⃣",
                    "3️⃣",
                    'Выйти']
         keyboard.add(*buttons)
-        await message.answer("В каком случае Вы совершите вынужденную остановку?\n"
+        await message.answer("<b>В каком случае Вы совершите вынужденную остановку?</b>\n"
                              "\n"
                              "Варианты ответа:\n"
                              "\n"
                              " 1. Остановившись непосредственно перед пешеходным переходом, чтобы уступить "
                              " дорогу пешеходу.\n"
                              " 2. Остановившись на проезжей части из-за технической неисправности транспортного средства.\n"
-                             " 3. В обоих перечисленных случаях", reply_markup=keyboard)
-    if message.text == '20 билетов':
-        await User.bilet20.set()
+                             " 3. В обоих перечисленных случаях", parse_mode='HTML', reply_markup=keyboard)
+
+@dp.message_handler(state=User.bilets)
+async def anwser_1(message: types.Message):
+    global connection
+
+    if message.text == "2️⃣":
+        await User.bilets1.set()
+        tickets_count[message.chat.id] = tickets_count.get(message.chat.id, 0) + 1
+
+        photo = open('2.jpg','rb')
+
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        buttons = ['1️⃣',
+                   "2️⃣",
+                   "3️⃣",
+                   'Выйти']
+        keyboard.add(*buttons)
+        await message.answer_photo( photo, caption = "Можно ли Вам остановиться в указанном месте для посадки пассажира?\n"
+                             "\n"
+                             "Варианты ответа:\n"
+                             "\n"
+                             " 1. Можно.\n"
+                             " 2. Можно, если Вы управляете такси.\n"
+                             " 3. Нельзя", reply_markup=keyboard)
+    elif message.text == "Выйти":
+        await User.menu.set()
+        photo_q = open('itogi.jpg', 'rb')
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        buttons = ["Давай попробуем!"]
+        keyboard.add(*buttons)
+        await message.answer_photo(photo_q, caption=
+        f"Количество решенных билетов : {tickets_count[message.chat.id]}\n"
+        "\n"
+        f"Количество ошибок : {errors_count[message.chat.id]}\n"
+        "\n"
+        "Попробуем еще?", reply_markup=keyboard)
+        errors_count[message.chat.id]=0
+        tickets_count[message.chat.id]=0
+    else:
+        await message.answer('❌ <b>Подумай еще!</b> ❌', parse_mode='HTML')
+        errors_count[message.chat.id]= errors_count.get(message.chat.id,0) + 1
+
+@dp.message_handler(state=User.bilets1)
+async def anwser_2(message: types.Message):
+    global connection
+
+    if message.text == "1️⃣":
+        await User.bilets2.set()
+        tickets_count[message.chat.id] = tickets_count.get(message.chat.id, 0) + 1
+
+        photo = open('3.jpg', 'rb')
+
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        buttons = ['1️⃣',
+                   "2️⃣",
+                   "3️⃣",
+                   'Выйти']
+        keyboard.add(*buttons)
+        await message.answer_photo(photo, caption=
+        "<b>Можно ли водителю легкового автомобиля выполнить опережение грузовых"
+        "автомобилей вне населенного пункта по такой траектории?</b>\n"
+        "\n"
+        "Варианты ответа:\n"
+        "\n"
+        "1. Можно.\n"
+        "2. Можно, если скорость грузовых автомобилей менее 30 км/ч.\n"
+        "3. Нельзя.\n", parse_mode='HTML', reply_markup=keyboard)
+    elif message.text == "Выйти":
+        await User.menu.set()
+        photo_q = open('itogi.jpg', 'rb')
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        buttons = ["Давай попробуем!"]
+        keyboard.add(*buttons)
+        await message.answer_photo(photo_q, caption=
+        f"Количество решенных билетов : {tickets_count[message.chat.id]}\n"
+        "\n"
+        f"Количество ошибок : {errors_count[message.chat.id]}\n"
+        "\n"
+        "Попробуем еще?", reply_markup=keyboard)
+        errors_count[message.chat.id]=0
+        tickets_count[message.chat.id]=0
+    else:
+        await message.answer('❌<b>Подумай еще!</b>❌', parse_mode='HTML')
+        errors_count[message.chat.id]= errors_count.get(message.chat.id,0) + 1
+
+
+@dp.message_handler(state=User.bilets2)
+async def anwser_3(message: types.Message):
+    global connection
+
+    if message.text == "1️⃣":
+
+        tickets_count[message.chat.id] = tickets_count.get(message.chat.id, 0) + 1
+
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
         photo = open('1.jpg', 'rb')
@@ -68,45 +169,30 @@ async def menu(message: types.Message):
                    'Выйти']
         keyboard.add(*buttons)
         await message.answer_photo(photo, caption=
-                            "Разрешен ли Вам съезд на дорогу с грунтовым покрытием?\n"
-                             "\n"
-                             "Варианты ответа:\n"
-                             "\n"
-                             " 1. Разрешен.\n "
-                             " 2. Разрешен только при технической неисправности транспортного средства.\n"
-                             " 3. Запрещен.", reply_markup=keyboard)
-    if message.text == '30 билетов':
-        await User.bilet30.set()
+        "<b>Разрешен ли Вам съезд на дорогу с грунтовым покрытием?</b>\n"
+        "\n"
+        "Варианты ответа:\n"
+        "\n"
+        " 1. Разрешен.\n "
+        " 2. Разрешен только при технической неисправности транспортного средства.\n"
+        " 3. Запрещен.", parse_mode='HTML', reply_markup=keyboard)
+    elif message.text == "Выйти":
+        await User.menu.set()
+        photo_q = open('itogi.jpg', 'rb')
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        buttons = ["Нарушает закон", "Превышает скорость"]
+        buttons = ["Давай попробуем!"]
         keyboard.add(*buttons)
-        await message.answer("Что он делает?", reply_markup=keyboard)
-
-@dp.message_handler(state='bilet10')
-async def anwser_10_1(message: types.Message):
-    global connection
-    if message.text == "2️⃣":
-        await User.bilet10.set()
-
-        photo = open('2.jpg','rb')
-
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        buttons = ['1️⃣',
-                   "2️⃣",
-                   "3️⃣",
-                   '/Выйти']
-        keyboard.add(*buttons)
-        await message.answer_photo( photo, caption = "Можно ли Вам остановиться в указанном месте для посадки пассажира?\n"
-                             "\n"
-                             "Варианты ответа:\n"
-                             "\n"
-                             " 1. Можно.\n"
-                             " 2. Можно, если Вы управляете такси.\n"
-                             " 3. Нельзя", reply_markup=keyboard)
-    if message.text == '1️⃣' or "3️⃣":
-        await message.answer('❌Подумай еще!❌')
-
-
+        await message.answer_photo(photo_q, caption=
+        f"Количество решенных билетов : {tickets_count[message.chat.id]}\n"
+        "\n"
+        f"Количество ошибок : {errors_count[message.chat.id]}\n"
+        "\n"
+        "Попробуем еще?", reply_markup=keyboard)
+        errors_count[message.chat.id]=0
+        tickets_count[message.chat.id]=0
+    else:
+        await message.answer('❌<b>Подумай еще!</b>❌', parse_mode='HTML')
+        errors_count[message.chat.id]= errors_count.get(message.chat.id,0) + 1
 
 
 if __name__ == '__main__':
